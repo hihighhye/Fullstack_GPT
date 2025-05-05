@@ -239,7 +239,7 @@ with st.sidebar:
     docs = None
     topic = None
 
-    choice = st.selectbox("Choose what you wnat to use", (
+    choice = st.selectbox("Choose what you want to use", (
         "File", 
         "Wikipedia Article",
     ))
@@ -253,7 +253,7 @@ with st.sidebar:
     else:
         topic = st.text_input("Topic that you want to learn")
         if topic:
-            wiki_search(topic)
+            docs = wiki_search(topic)
 
 if not docs:
     st.markdown("""
