@@ -36,7 +36,7 @@ llm = ChatOllama(
 def save_message(message, role):
     st.session_state["messages"].append({"message": message, "role": role})
     
-@st.cache_data(show_spinner="Embedding a file...")
+@st.cache_data(show_spinner="Embedding file...")
 def embed_file(file):
     # st.write(file)
     file_content = file.read()
