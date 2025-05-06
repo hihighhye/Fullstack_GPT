@@ -1,5 +1,5 @@
 import streamlit as st
-from langchain.retrievers import WikipediaRetriever
+from langchain_community.retrievers import WikipediaRetriever
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.chat_models import ChatOpenAI
@@ -267,7 +267,7 @@ if not docs:
     
 else:
     response = run_quiz_chain(docs, topic if topic else file.name)
-    st.write(response)
+    # st.write(response)
     with st.form("questions_form"):
         for question in response["questions"]:
             st.write(question["question"])
