@@ -9,6 +9,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.callbacks.base import BaseCallbackHandler
 import re
+import os
 
 
 check_prompt = ChatPromptTemplate.from_template(
@@ -92,6 +93,7 @@ choose_prompt = ChatPromptTemplate.from_messages(
             question.
 
             Use the answers that have the highest score (more helpful).
+            Favor the latest documents.
 
             Cite sources. Do not modify the source, keep it as a link.
 
@@ -130,7 +132,7 @@ def choose_answer(inputs):
     choose_chain = choose_prompt | llm
 
     condensed = "\n\n".join(f"Answer: {answer['answer']}\n\
-                            Source: {answer['source']}\n" for answer in answers) #   Date: {answer['date']}\n
+                            Source: {answer['source']}\nDate: {answer['date']}\n" for answer in answers)
     
     return choose_chain.invoke({"question": question,"answers": condensed})
 
@@ -148,6 +150,7 @@ def get_answers(inputs):
                     {"context": doc.page_content, "question": question}
                     ).content,
                 "source": doc.metadata["source"],
+                "date": doc.metadata["lastmod"]
             } for doc in docs
         ]
     }
@@ -163,6 +166,15 @@ def parse_page(soup):
         footer.decompose()
     if navbar:
         navbar.decompose()
+
+    for script in soup.find_all("script"):
+        script.decompose()
+
+    for footbar in soup.find_all("div", "astro-fxeopwe4"):
+        footbar.decompose()
+
+    for sidebar in soup.find_all("div", "sidebar-content"):
+        sidebar.decompose()
     
     refined = re.sub("([\n\s\t]|\xa0| {2,})", " ",str(soup.get_text()))
     return refined
@@ -174,13 +186,32 @@ def load_website(url):
         chunk_overlap=200,
     )
 
-    loader = SitemapLoader(
-        url,
-        parsing_function=parse_page
-    )
-    loader.requests_per_second = 5
-    docs = loader.load_and_split(text_splitter=splitter)
-    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+    vector_store = None
+    progress_bar = st.progress(0.0, text="Loading sitemap blocks...")
+    try:
+        for i in range(50):
+            loader = SitemapLoader(
+                url,
+                filter_urls=[r"^(.*developers.cloudflare.com\/).+"],
+                parsing_function=parse_page,
+                blocksize=100,
+                blocknum=i
+            )
+            loader.requests_per_second = 5
+            docs = loader.load_and_split(text_splitter=splitter)
+
+            if i == 0:
+                vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+            else:
+                vector_store.add_documents(docs)
+            progress_bar.progress((i+1.0) / 50.0, text="Loading sitemap blocks...")
+           
+    except ValueError:
+        progress_bar.progress(1.0, text="All documents were loaded!")
+        print("All documents were loaded!")
+    
+    progress_bar.empty()
+    st.info("All documents were successfully loaded.", icon="ℹ️")
     return vector_store.as_retriever()
 
 
@@ -192,11 +223,11 @@ st.set_page_config(
 st.title("SiteGPT")
 
 with st.sidebar:
-    with st.form("OpenAI API Key Setting"):
-        user_openai_api_key = st.text_input("Enter your OpenAI API key.")
-        submitted = st.form_submit_button("Set")
-        if submitted:
-            st.write(f"Your API Key: {user_openai_api_key}")
+    # with st.form("OpenAI API Key Setting"):
+    #     user_openai_api_key = st.text_input("Enter your OpenAI API key.")
+    #     submitted = st.form_submit_button("Set")
+    #     if submitted:
+    #         os.environ['OPENAI_API_KEY'] = user_openai_api_key
 
     url = st.text_input("Write down a URL", 
                         placeholder="https://example.com")
@@ -205,12 +236,12 @@ with st.sidebar:
 
 # test_url = "https://developers.cloudflare.com/sitemap-0.xml"
 
-if user_openai_api_key:
-    llm = ChatOpenAI(
-        temperature=0.1,
-        model="gpt-4.1-nano-2025-04-14",
-        api_key=user_openai_api_key
-    )
+# if user_openai_api_key:
+llm = ChatOpenAI(
+    temperature=0.1,
+    model="gpt-4.1-nano-2025-04-14",
+    # api_key=user_openai_api_key
+)
 
 if not url:
     st.markdown(
