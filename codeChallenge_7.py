@@ -197,7 +197,7 @@ def load_website(url):
                 blocksize=100,
                 blocknum=i
             )
-            loader.requests_per_second = 5
+            loader.requests_per_second = 3
             docs = loader.load_and_split(text_splitter=splitter)
 
             if i == 0:
