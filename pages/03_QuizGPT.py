@@ -33,7 +33,7 @@ llm = ChatOpenAI(
     ]
 )
 
-questions_prompt = ChatPromptTemplate.from_messages( [
+questions_prompt = ChatPromptTemplate.from_messages([
         (
             "system",
             """

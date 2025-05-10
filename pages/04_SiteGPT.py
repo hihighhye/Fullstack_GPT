@@ -95,7 +95,7 @@ def get_answers(inputs):
             {
                 "answer": answers_chain.invoke(
                     {"context": doc.page_content, "question": question}
-                    ).content,
+                ).content,
                 "source": doc.metadata["source"],
                 # "date": doc.metadata["lastmod"]
             } for doc in docs
