@@ -207,7 +207,7 @@ if video:
                     (
                         "system",
                         """
-                            Answer the question using ONLY the following context. 
+                            Answer the question using ONLY the following context and the conversation history. 
                             If you don't know the answer,
                             just say you don't know. DON'T make anything up.
         
