@@ -20,6 +20,7 @@ st.markdown("""
             - [x] [QuizGPT](/QuizGPT)
             - [x] [SiteGPT](/SiteGPT)
             - [x] [MeetingGPT](/MeetingGPT)
-            - [x] [InvestorGPT](/InvestorGPT)
+            - [x] [InvestorGPT 1 - Alpha Vantage](/InvestorGPT)
+            - [x] [InvestorGPT 2 - Yahoo Finance](/InvestorGPT_2)
             """)
 

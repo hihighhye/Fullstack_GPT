@@ -19,7 +19,7 @@ llm = ChatOpenAI(
 
 
 st.set_page_config(
-    page_title="InvestorGPT",
+    page_title="InvestorGPT with Alpha Vantage",
     page_icon="📉"
 )
 
@@ -27,12 +27,14 @@ st.title("InvestorGPT")
 
 st.markdown(
     """
-    # InvestorGPT
+    # InvestorGPT with Alpha Vantage
 
     Welcome to InvestorGPT.
 
     Write down the name of a company 
     and our Agent will do the research for you.
+
+    All information is based on Alpha Vantage.
     """
 )
 
