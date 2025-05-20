@@ -4,5 +4,5 @@ env/
 .streamlit
 Assignment#6/
 __pycache__/
-notebook.ipynb
 requirements.txt:Zone.Identifier
+*.db
