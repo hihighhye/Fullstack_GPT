@@ -67,12 +67,11 @@ def handle_authorize(client_id:str, redirect_uri:str, state:str):
     return f"""
     <html>
         <head>
-            <title>Nicolacus Maximus Log In</title>
+            <title>ChefGPT Log In</title>
         </head>
         <body>
-            <h1>Log Into Nicolacus Maximus</h1>
-            <a href="{redirect_uri}?code=ABCDEF&state={state}">Authorize
-            Nicolacus Maximus GPT</a>
+            <h1>Log Into ChefGPT</h1>
+            <a href="{redirect_uri}?code=ABCDEF&state={state}">Authorize ChefGPT</a>
         </body>
     </html>
     """

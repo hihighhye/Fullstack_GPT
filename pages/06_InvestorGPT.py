@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain.chat_models import ChatOpenAI
 from typing import Type
-from langchain.tools import Tool, BaseTool
+from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage
 from langchain.agents import initialize_agent, AgentType

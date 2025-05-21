@@ -34,8 +34,8 @@ splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
 
 has_transcript = os.path.exists("./.cache/podcast.txt")
 
-def save_message(message, role):
-    st.session_state["messages"].append({"message": message, "role": role})
+# def save_message(message, role):
+#     st.session_state["messages"].append({"message": message, "role": role})
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
@@ -201,7 +201,7 @@ if video:
         query = st.text_input("Ask anything about the audio content that you uploaded.")
 
         if query:
-            save_message(query, "human")
+            # save_message(query, "human")
             with st.spinner("Loading..."):            
                 qna_prompt = ChatPromptTemplate.from_messages([
                     (
@@ -227,7 +227,7 @@ if video:
                 st.write(res.content)
                 memory.save_context({"input": query}, {"output": res.content})
 
-else:
-    st.session_state["messages"] = []
+# else:
+#     st.session_state["messages"] = []
 
     
