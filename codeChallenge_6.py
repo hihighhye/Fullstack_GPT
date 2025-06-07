@@ -9,6 +9,8 @@ from langchain_core.documents import Document
 from langchain.schema import BaseOutputParser, output_parser
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 import json
+import os
+import random
 
 
 format = {
@@ -49,50 +51,36 @@ format = {
             },
 }
 
-llm = ChatOpenAI(
-    temperature=0.1,
-    model="gpt-4.1-nano-2025-04-14",
-    streaming=True,
-    callbacks=[
-        StreamingStdOutCallbackHandler()
-    ]
-).bind(
-    function_call={
-        "name": "create_quiz",
-    },
-    functions=[
-        format
-    ],
-)
-
 questions_prompt = ChatPromptTemplate.from_messages( [
         (
             "system",
             """
             You are a helpful assistant that is role playing as a teacher.
                 
-            Based ONLY on the following context make {number} questions with the level of difficulty the user chose
+            Based ONLY on the following context, make 10 questions with the level of difficulty the user chose
             in order to test the user's knowledge about the text.
             *The level of difficulty: from Level 1(The easiest) to Level 3(The hardest)
             -----
             The level user chose: {level}
             
             Keep in mind that each question should have 4 answers, three of them must be incorrect and one should be correct.
+
+            Maintain the format of output throughly based on examples below.
                 
                 
             Questions examples:
                 
             Question: What is the color of the ocean?
-            Answers: [ (Red, False) | (Yellow, False) | (Green, False) | (Blue, True) ]
+            Answers: [ (Red, False) , (Yellow, False) , (Green, False) , (Blue, True) ]
                 
             Question: What is the capital or Georgia?
-            Answers: [ (Baku, False) | (Tbilisi, True) | (Manila, False) | (Beirut, False) ]
+            Answers: [ (Baku, False) , (Tbilisi, True) , (Manila, False) , (Beirut, False) ]
                 
             Question: When was Avatar released?
-            Answers: [ (2007, False) | (2001, False) | (2009, True) | (1998, False) ]
+            Answers: [ (2007, False) , (2001, False) , (2009, True) , (1998, False) ]
                 
             Question: Who was Julius Caesar?
-            Answers: [ (A Roman Emperor, True) | (Painter, False) | (Actor, False) | (Model, False) ]
+            Answers: [ (A Roman Emperor, True) , (Painter, False) , (Actor, False) , (Model, False) ]
                 
             Your turn!
                 
@@ -103,9 +91,6 @@ questions_prompt = ChatPromptTemplate.from_messages( [
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
-
-questions_chain = questions_prompt | llm
-
 
 st.set_page_config(
     page_title="QuizGPT",
@@ -139,9 +124,9 @@ def split_file(file):
 
 
 @st.cache_data(show_spinner="Making quiz...")
-def run_quiz_chain(_docs, number, level, topic):
+def run_quiz_chain(_docs, level, topic):
     formatted_docs = format_docs(_docs)
-    return questions_chain.invoke({"context": formatted_docs, "number": number, "level": level})
+    return questions_chain.invoke({"context": formatted_docs, "level": level})
 
 @st.cache_data(show_spinner="Searching Wikipedia...")
 def wiki_search(term):
@@ -149,13 +134,39 @@ def wiki_search(term):
     docs = retriever.invoke(term) # retriever.get_relevant_documents(term)
     return docs
 
+@st.cache_data()
+def shuffle_answers(response):
+    for question in response["questions"]:
+        random.shuffle(question["answers"])
+
+    return response
+
 
 with st.sidebar:
     docs = None
     topic = None
     level = None
 
-    number = st.number_input("The number of questions", value=10, step=1)
+    user_openai_api_key = st.text_input("Enter your OpenAI API key.")
+    if user_openai_api_key:
+            os.environ['OPENAI_API_KEY'] = user_openai_api_key
+
+            llm = ChatOpenAI(
+                temperature=0.1,
+                model="gpt-4.1-nano-2025-04-14",
+                streaming=True,
+                callbacks=[
+                    StreamingStdOutCallbackHandler()
+                ],
+                api_key=user_openai_api_key,
+            ).bind(
+                function_call={
+                    "name": "create_quiz",
+                },
+                functions=[
+                    format
+                ],
+            )
 
     level = st.selectbox("The level of difficulty", (
         "Level 1",
@@ -190,21 +201,38 @@ if not docs:
                 """)
     
 else:
-    _response = run_quiz_chain(docs, number, level, topic if topic else file.name)
+    questions_chain = questions_prompt | llm
+    
+    _response = run_quiz_chain(docs, level, topic if topic else file.name)
     response = json.loads(_response.additional_kwargs["function_call"]["arguments"])
     # st.write(response)
 
+    response = shuffle_answers(response)
+
+    isCreated = True
     with st.form("questions_form"):
         i = 1
+        correct_cnt = 0
+        
         for question in response["questions"]:
             st.write(str(i) + ". ", question["question"])
             value = st.radio("Select an option", [answer["answer"] for answer in question["answers"]],
                      index=None)
             i += 1
             
+            if value:
+                isCreated = False
+
             if {"answer": value, "correct": True} in question["answers"]:
                 st.success("Correct!")
+                correct_cnt += 1
             elif value is not None:
                 st.error("Wrong")
+        
+        if correct_cnt < len(response["questions"]) and not isCreated:
+            st.toast("Try again!")
+        elif correct_cnt == len(response["questions"]):
+            st.toast("Congrats!")
+            st.balloons()
 
         button = st.form_submit_button()
