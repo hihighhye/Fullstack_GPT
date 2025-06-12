@@ -107,7 +107,6 @@ choose_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-
 def save_query_hist(question, answer):
     st.session_state["query_hist"].append({"question": question, "answer": answer})
 
@@ -132,7 +131,7 @@ def choose_answer(inputs):
     choose_chain = choose_prompt | llm
 
     condensed = "\n\n".join(f"Answer: {answer['answer']}\n\
-                            Source: {answer['source']}\nDate: {answer['date']}\n" for answer in answers)
+                            Source: {answer['source']}\nDate: {answer['date']}\n" for answer in answers) #   Date: {answer['date']}\n
     
     return choose_chain.invoke({"question": question,"answers": condensed})
 
@@ -189,19 +188,21 @@ def load_website(url):
     vector_store = None
     progress_bar = st.progress(0.0, text="Loading sitemap blocks...")
     try:
-        for i in range(50):
+        for i in range(25):
             loader = SitemapLoader(
                 url,
-                filter_urls=[r"^(.*developers.cloudflare.com\/).+"],
+                filter_urls=[r"^(.*developers.cloudflare.com\/(ai-gateway|vectorize|workers-ai)\/).+"],
                 parsing_function=parse_page,
-                blocksize=100,
+                blocksize=300,
                 blocknum=i
             )
-            loader.requests_per_second = 3
+            loader.requests_per_second = 5
             docs = loader.load_and_split(text_splitter=splitter)
 
             if i == 0:
-                vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+                vector_store = FAISS.from_documents(docs, OpenAIEmbeddings(
+                    chunk_size=500,
+                ))
             else:
                 vector_store.add_documents(docs)
             progress_bar.progress((i+1.0) / 50.0, text="Loading sitemap blocks...")
@@ -232,16 +233,17 @@ with st.sidebar:
     url = st.text_input("Write down a URL", 
                         placeholder="https://example.com")
     
-    st.link_button("Go to Github Repo", "https://github.com/hihighhye/Fullstack_GPT")
+    st.link_button("Go to Github Repo", "https://github.com/hihighhye/SiteGPT")
 
 # test_url = "https://developers.cloudflare.com/sitemap-0.xml"
 
-# if user_openai_api_key:
-llm = ChatOpenAI(
-    temperature=0.1,
-    model="gpt-4.1-nano-2025-04-14",
-    # api_key=user_openai_api_key
-)
+user_openai_api_key = True
+if user_openai_api_key:
+    llm = ChatOpenAI(
+        temperature=0.1,
+        model="gpt-4.1-nano-2025-04-14",
+        # api_key=user_openai_api_key
+    )
 
 if not url:
     st.markdown(
@@ -281,5 +283,8 @@ else:
         else:
             st.session_state["query_hist"] = []
 
-           
 
+## Test Questions:
+# * "What is the price per 1M input tokens of the llama-2-7b-chat-fp16 model?"
+# * "What can I do with Cloudflare’s AI Gateway?"
+# * "How many indexes can a single account have in Vectorize?"
