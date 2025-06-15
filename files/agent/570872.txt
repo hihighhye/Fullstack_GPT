@@ -1,0 +1,37 @@
+# XZ Backdoor Overview
+
+## What is the XZ Backdoor?
+The XZ backdoor refers to a critical vulnerability that was introduced in the XZ Utils compression library, specifically affecting versions 5.6.0 and 5.6.1. Discovered in March 2024, this backdoor enabled unauthorized access to Linux systems, potentially allowing attackers to execute arbitrary commands remotely via SSH, making it a significant security risk.
+
+## How the Backdoor Worked
+The backdoor was ingeniously hidden within the XZ Utils library and utilized a series of carefully crafted changes made by a contributor identified as "Jia Tan." This involved modifying the liblzma library's functionality to enable attackers to hijack the OpenSSH daemon (sshd) process before authentication. The backdoor used a specific public key to gain remote access, bypassing standard security measures without alerting system logs.
+
+## Technical Details
+1. **Introduction of Malicious Code:**
+   - The malicious payload was embedded in the library through changes that seemed benign, such as adding new test files which, when processed, activated the backdoor under specific conditions (e.g., system architecture and GCC usage).
+
+2. **Execution of Commands:**
+   - Upon detecting the correct conditions, the backdoor would modify the execution behavior of sshd, allowing remote command execution using a predetermined public key, without leaving obvious traces.
+
+3. **Detection of the Vulnerability:**
+   - The backdoor was initially discovered by Andres Freund, who noted unusual CPU usage during SSH connections, leading to an investigation that ultimately revealed the malicious modifications.
+
+## Impact and Response
+- **CVE-2024-3094:**
+   - The vulnerability was assigned a CVE identifier (CVE-2024-3094) and received a CVSS score of 10.0, marking it as critically severe.
+
+- **Scope of Infection:**
+   - Though the backdoor was tracked within developing version repositories and not widely deployed in production systems, its potential reach was alarming, impacting various Linux distributions, including Debian and Fedora.
+
+- **Security Measures:**
+   - Following its discovery, swift action was taken by maintainers across multiple distributions. Releases containing the backdoored library were promptly removed, and users were advised to upgrade to safe versions of XZ Utils.
+
+## Lessons Learned
+- **Trust in Open Source:**
+   - This incident raised serious questions about the trust model within open-source software, emphasizing the need for enhanced code review processes and greater oversight.
+
+- **Proactive Security Practices:**
+   - The importance of proactive monitoring for unusual behaviors and vulnerabilities in critical software components like compression libraries was highlighted, showcasing how a well-timed investigation can prevent widespread disasters.
+
+## Conclusion
+The XZ backdoor incident serves as a stark reminder of the vulnerabilities that exist within the open-source ecosystem and the potential consequences of inadequate security practices. It underscores the need for vigilance, proper review processes, and supportive infrastructure for maintainers to keep essential projects secure against malicious actors.
