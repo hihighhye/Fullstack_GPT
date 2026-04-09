@@ -247,11 +247,11 @@ if user_openai_api_key:
 
 if not url:
     st.markdown(
-                """
-                Ask questions about the content of a website.
+        """
+        Ask questions about the content of a website.
 
-                Start by writing the URL of the website on the sidebar.
-            """)
+        Start by writing the URL of the website on the sidebar.
+    """)
     
 else:
     # async chromium loader

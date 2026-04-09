@@ -51,7 +51,7 @@ format = {
             },
 }
 
-questions_prompt = ChatPromptTemplate.from_messages( [
+questions_prompt = ChatPromptTemplate.from_messages([
         (
             "system",
             """
@@ -192,13 +192,13 @@ with st.sidebar:
 
 if not docs:
     st.markdown("""
-                Welcom to QuizGPT.
+        Welcom to QuizGPT.
 
-                I will make a quiz from Wikipedia articles or files you upload to test
-                your knowledge and help you study.
+        I will make a quiz from Wikipedia articles or files you upload to test
+        your knowledge and help you study.
 
-                Get started by uploading a file or searching on Wikipedia in the sidebar.
-                """)
+        Get started by uploading a file or searching on Wikipedia in the sidebar.
+        """)
     
 else:
     questions_chain = questions_prompt | llm

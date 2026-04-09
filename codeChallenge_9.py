@@ -226,6 +226,13 @@ st.set_page_config(
     page_icon="🔍"
 )
 
+with st.sidebar:
+    with st.form("OpenAI API Key Setting"):
+        user_openai_api_key = st.text_input("Enter your OpenAI API key.")
+        submitted = st.form_submit_button("Set")
+        if submitted:
+            os.environ['OPENAI_API_KEY'] = user_openai_api_key
+
 st.title("Research Assistant")
 
 st.markdown(
